@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.Mvc;
 using MyShop.Core.Models;
 using MyShop.DataAccess.InMemory;
+using static FunctionalExtensions.FunctionalHelpers;
 
 namespace MyShop.WebUI.Controllers
 {
@@ -42,72 +43,44 @@ namespace MyShop.WebUI.Controllers
                 context.Insert(product);
                 context.Commit();
 
-                return RedirectToAction("Index");
+                return RedirectToHome;
             }
         }
 
         public ActionResult Edit(string Id)
         {
-            Product product = context.Find(Id);
-            if (product == null)
-            {
-                return HttpNotFound();
-            }
-            else
-            {
-                return View(product);
-            }
+            return ShowViewOrHttpNotFound(() => context.Find(Id));
         }
 
         [HttpPost]
         public ActionResult Edit(Product product, string Id)
         {
-            Product productToEdit = context.Find(Id);
-
-            if (productToEdit == null)
-            {
-                return HttpNotFound();
-            }
-            else
-            {
-                if (!ModelState.IsValid)
+            return FindOrHttpNotFound(
+                () => context.Find(Id),
+                (productToEdit) =>
                 {
-                    return View(product);
-                }
+                    productToEdit.Category = product.Category;
+                    productToEdit.Description = product.Description;
+                    productToEdit.Image = product.Image;
+                    productToEdit.Name = product.Name;
+                    productToEdit.Price = product.Price;
 
-                productToEdit.Category = product.Category;
-                productToEdit.Description = product.Description;
-                productToEdit.Image = product.Image;
-                productToEdit.Name = product.Name;
-                productToEdit.Price = product.Price;
+                    context.Commit();
 
-                context.Commit();
-
-                return RedirectToAction("Index");
-            }
+                    return RedirectToHome;
+                });
         }
 
         public ActionResult Delete(string Id)
         {
-            return BasicViewFoundNotFound(() => context.Find(Id));
-
-            Product productToDelete = context.Find(Id);
-
-            if (productToDelete == null)
-            {
-                return HttpNotFound();
-            }
-            else
-            {
-                return View(productToDelete);
-            }
+            return ShowViewOrHttpNotFound(() => context.Find(Id));
         }
 
         [HttpPost]
         [ActionName("Delete")]
         public ActionResult ConfirmDelete(String Id)
         {
-            return BasicFindHttpNotFound(
+            return FindOrHttpNotFound(
                 () => context.Find(Id),
                 (x) =>
                 {
@@ -117,42 +90,18 @@ namespace MyShop.WebUI.Controllers
                 });
         }
 
-        public ActionResult ExecuteOnFound<TFindType>
-            (Func<TFindType> find, Func<TFindType, ActionResult> OnFound, Func<TFindType, ActionResult> OnNotFound)
-            where TFindType : class
-        {
-            TFindType t = find();
-            if(t == null)
-            {
-                return OnNotFound(t);
-            }
-            else
-            {
-                return OnFound(t);
-            }
-        }
-
-        public ActionResult BasicFindHttpNotFound<TFindType>
-            (Func<TFindType> find, Func<TFindType, ActionResult> OnFound) where TFindType : class =>
-            ExecuteOnFound(
-                find,
+        public ActionResult FindOrHttpNotFound<TFindType>
+            (Func<TFindType> valueFunction, Func<TFindType, ActionResult> OnFound) where TFindType : class =>
+            MapNullable(
+                valueFunction,
                 OnFound,
                 (x) => HttpNotFound());
 
-        public ActionResult BasicViewFoundNotFound<TFindType>(Func<TFindType> find) where TFindType : class =>
-            BasicFindHttpNotFound(find, (x) => View(x));
+        
+        public ActionResult ShowViewOrHttpNotFound<TFindType>(Func<TFindType> valueFunction) where TFindType : class =>
+            FindOrHttpNotFound(valueFunction, (x) => View(x));
 
         public ActionResult RedirectToHome => RedirectToAction("Index");
     }
 }
 
-public static class FunctionalExt
-{
-    public struct Unit { }
-
-    public static Unit ActionToFunc(this Action action)
-    {
-        action();
-        return new Unit();
-    }
-}

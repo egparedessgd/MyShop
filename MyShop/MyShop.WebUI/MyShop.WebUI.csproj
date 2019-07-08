@@ -258,6 +258,10 @@
     <Content Include="Scripts\jquery-3.3.1.min.map" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FunctionalExtensions\FunctionalExtensions.csproj">
+      <Project>{5b8661ac-1c16-46d1-9c83-c46729809f61}</Project>
+      <Name>FunctionalExtensions</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MyShop.Core\MyShop.Core.csproj">
       <Project>{c044be8c-997a-4128-b122-d991d7310de3}</Project>
       <Name>MyShop.Core</Name>
