@@ -84,7 +84,7 @@ namespace MyShop.WebUI.Controllers
                 () => context.Find(Id),
                 (x) =>
                 {
-                    context.Delete(Id);
+                    context.Deletee(Id);
                     context.Commit();
                     return RedirectToHome;
                 });
